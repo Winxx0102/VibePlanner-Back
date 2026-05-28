@@ -1,26 +1,39 @@
 from database import db
 from datetime import datetime
 
-# Modelo de Ejemplo: Usuario
-class User(db.Model):
-    __tablename__ = 'users' # Nombre explícito de la tabla
+# alembic revision --autogenerate -m "tabla song"
+# alembic upgrade head
+
+
+class Author(db.Model):
+    __tablename__ = 'authors'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(50), unique=True, nullable=False)   # Ej: "Rock", "Pop", "Trap"
+    
+    # Relación: Un género puede estar en muchas canciones
+    songs = db.relationship('Song', backref='author', lazy=True)
 
-    # Relación uno a muchos con Plan (un usuario tiene muchos planes)
-    planes = db.relationship('Plan', backref='author', lazy=True, cascade="all, delete-orphan")
 
-# Modelo de Ejemplo: Plan (Para tu VibePlanner)
-class Plan(db.Model):
-    __tablename__ = 'planes'
+class Genre(db.Model):
+    __tablename__ = 'genres'
     
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(50), unique=True, nullable=False)   # Ej: "Rock", "Pop", "Trap"
     
-    # Clave foránea que apunta al id de la tabla users
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    # Relación: Un género puede estar en muchas canciones
+    songs = db.relationship('Song', backref='genre', lazy=True)
+
+class Song(db.Model):
+    __tablename__ = 'songs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)               # name (varchar)
+    
+    # Llaves Foráneas (Foreign Keys)
+    genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), nullable=False) # genre foreign
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.id'), nullable=False) # genre foreign
+    # Campo JSON para la estructura de la canción
+    structure = db.Column(db.JSON, nullable=True)                  # structure (json)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

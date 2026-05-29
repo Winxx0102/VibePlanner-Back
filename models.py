@@ -11,12 +11,6 @@ event_songs = db.Table('event_songs',
     db.Column('song_id', db.Integer, db.ForeignKey('songs.id'), primary_key=True)
 )
 
-# Para relacionar: Eventos <-> Usuarios (Asistentes del Staff/Registro)
-event_assistants = db.Table('event_assistants',
-    db.Column('event_id', db.Integer, db.ForeignKey('events.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
-)
-
 
 # ==========================================
 # MODELOS EXISTENTES
@@ -46,13 +40,6 @@ class Song(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-
-
 # ==========================================
 # NUEVO MODELO: EVENTO
 # ==========================================
@@ -67,9 +54,7 @@ class Event(db.Model):
     description = db.Column(db.Text)
     
     # --- CAMPO JSON EXTRA PARA FRONTEND ---
-    # Aquí puedes guardar info como: etapas del show, catering, equipos necesarios, etc.
     structure = db.Column(db.JSON, nullable=True)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # --- RELACIONES ---
@@ -77,13 +62,8 @@ class Event(db.Model):
     # Canciones que se tocarán (Setlist)
     songs = db.relationship('Song', secondary=event_songs, lazy='subquery',
         backref=db.backref('events', lazy=True))
-    
-    # Usuarios registrados en el evento
-    attendees = db.relationship('User', secondary=event_assistants, lazy='subquery',
-        backref=db.backref('events', lazy=True))
 
     # Personas de logística (externas, no están en DB de users)
-    # Usaremos una tabla embebida simple o un modelo ligero si necesitan más datos
     logistics = db.relationship('EventLogistics', backref='event', lazy=True)
 
     # --- MÉTODO PARA API REST ---
@@ -94,10 +74,9 @@ class Event(db.Model):
             "event_date": self.event_date.isoformat() if self.event_date else None,
             "location": self.location,
             "description": self.description,
-            "structure": self.structure, # Ya es JSON friendly
+            "structure": self.structure,
             "songs": [{"id": s.id, "name": s.name} for s in self.songs],
-            "attendees": [{"id": u.id, "username": u.username} for u in self.attendees],
-            "logistics": [{"name": l.name, "role": l.role} for l in self.logistics]
+            "logistics": [{"name": l.name, "role": l.role, "phone": l.phone} for l in self.logistics]
         }
 
 
@@ -107,5 +86,5 @@ class EventLogistics(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(50)) # Ej: "Sonidista", "Iluminación"
+    role = db.Column(db.String(50))
     phone = db.Column(db.String(20))

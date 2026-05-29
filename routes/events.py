@@ -1,18 +1,9 @@
 from flask import Blueprint, request, jsonify
-from models import db, Event, Song, User, EventLogistics
-from datetime import datetime
-from flask import Blueprint, request, jsonify
-from models import db, Event, Song, User, EventLogistics
+from models import db, Event, Song, EventLogistics
 from datetime import datetime
 
 event_bp = Blueprint('events', __name__, url_prefix='/api/events')
 
-
-
-@event_bp.route('/', methods=['GET'])
-def get_events():
-    events = Event.query.all()
-    return jsonify([e.to_json() for e in events])
 
 @event_bp.route('/', methods=['POST'])
 def create_event():
@@ -33,30 +24,8 @@ def create_event():
     if 'song_ids' in data and data['song_ids']:
         requested_ids = data['song_ids']
         
-        # Buscar solo las que existen
         existing_songs = Song.query.filter(Song.id.in_(requested_ids)).all()
         found_ids = {s.id for s in existing_songs}
-        requested_set = set(requested_ids)
-        
-        # Verificar sihay IDs que no existen
-        missing_ids = requested_set - found_ids
-        
-        if missing_ids:
-            db.session.rollback() # Deshacer el evento
-            return jsonify({
-                "error": "Algunas canciones no existen",
-                "requested": list(requested_set),
-                "missing": list(missing_ids)
-            }), 400
-        
-        new_event.songs = existing_songs
-
-    # --- VALIDAR USUARIOS ---
-    if 'user_ids' in data and data['user_ids']:
-        requested_ids = data['user_ids']
-        
-        existing_users = User.query.filter(User.id.in_(requested_ids)).all()
-        found_ids = {u.id for u in existing_users}
         requested_set = set(requested_ids)
         
         missing_ids = requested_set - found_ids
@@ -64,14 +33,14 @@ def create_event():
         if missing_ids:
             db.session.rollback()
             return jsonify({
-                "error": "Algunos usuarios no existen",
+                "error": "Algunas canciones no existen",
                 "missing": list(missing_ids)
             }), 400
         
-        new_event.attendees = existing_users
+        new_event.songs = existing_songs
 
     # --- LOGÍSTICA ---
-    if 'logistics' in data:
+    if 'logistics' in data and data['logistics']:
         for log in data['logistics']:
             log_entry = EventLogistics(
                 event_id=new_event.id,
@@ -87,7 +56,6 @@ def create_event():
         "message": "¡Evento creado con éxito!", 
         "event_id": new_event.id
     }), 201
-    
     
     #ejemplo de api rest para crear un evento con estructura JSON y relaciones con canciones y usuarios. El endpoint valida que las canciones y usuarios existan antes de asociarlos al evento, y maneja la logística como una relación adicional.
     # {

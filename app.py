@@ -4,7 +4,6 @@ from database import db
 import models 
 from flask_cors import CORS
 from routes import genres, songs, authors
-from routes.events import event_bp
 app = Flask(__name__)
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -13,7 +12,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-app.register_blueprint(event_bp)
 app.register_blueprint(songs.songs_bp)
 app.register_blueprint(genres.genres_bp)
 app.register_blueprint(authors.authors_bp)

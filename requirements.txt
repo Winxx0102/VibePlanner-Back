@@ -12,7 +12,7 @@ MarkupSafe==3.0.3
 SQLAlchemy==2.0.50
 typing_extensions==4.15.0
 Werkzeug==3.1.8
-langhchain-groq
+langchain-groq
 langchain-core
 pydantic
 langchain-community 
